@@ -1,0 +1,1343 @@
+---
+title: "Exploratory Data Analysis"
+author: "Dimitrios Kapetanios"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r libraries, echo=TRUE, message=FALSE, warning=FALSE}
+library(DT)
+library(ggplot2)                     
+library(GGally) 
+library(DataExplorer)                
+library(tidyr)
+library(factoextra)
+library(gridExtra)
+library(FactoMineR)
+library(kernlab)
+library(NbClust)
+library(cluster)
+library(dendextend)
+```
+
+```{r directory, include=FALSE}
+getwd()
+setwd("C:\\Users\\kapet\\Desktop\\ΜΑΘΗΜΑΤΑ\\4ο Έτος\\Η' Εξάμηνο\\Εξόρυξη & Ανάλυση Δεδομένων Μεγάλου Όγκου\\ergasia")
+```
+
+
+```{r pre-processing, echo=TRUE}
+dt_st1 <- read.csv("Country-data.csv")
+dt_st2 <- read.csv("DevelopedCountriesList.csv")
+dt_merged <- merge(dt_st1, dt_st2, by = "country")
+DATA <- dt_merged[,-11]
+DATA$state2 <- as.factor(ifelse(DATA$hdi < 0.8, "i.      Developing", "ii.      Developed"))
+
+DATA$state3 <- as.factor(ifelse(DATA$hdi > 0.8, "iii.      Developed",
+                         ifelse(DATA$hdi > 0.5, "ii.      Developing", "i.      Under-Developed")))
+
+DATA$state5 <- as.factor(ifelse(DATA$hdi > 0.80, "v.     self-sufficient",
+                         ifelse(DATA$hdi > 0.65, "iv.    ok",
+                         ifelse(DATA$hdi > 0.55, "iii.    maybe in need",
+                         ifelse(DATA$hdi > 0.45, "ii.    probably need aid", "i.     definately need aid")))))
+
+data <- DATA[,-(11:12)]
+```
+
+
+```{r data, echo=TRUE}
+str(data)
+DT::datatable(data)
+```
+
+```{r correlations, warning=FALSE}
+ggcorr(data, palette = "RdBu", label = TRUE, label_alpha = TRUE)
+```
+
+```{r missing values, echo=T, fig.height=8, fig.width=8}
+plot_missing(data, ggtheme = theme_minimal(), title = "Missing Values")
+```
+
+```{r variable histograms, echo=TRUE, fig.height=10, fig.width=16, message=FALSE}
+data %>%
+  gather(Attributes, value, 2:10) %>%
+  ggplot(aes(x=value, fill=Attributes)) +
+  geom_histogram(colour="black", show.legend=FALSE) +
+  facet_wrap(~Attributes, scales="free_x") +
+  labs(x="Values", y="Frequency",
+       title="Country Data - Histograms") +
+  theme_bw()
+```
+
+
+```{r NORTH AMERICA, echo=TRUE}
+data$Continent[   data$country == "Anguilla" |
+                  data$country == "Antigua and Barbuda" |
+                  data$country == "Aruba" |
+                  data$country == "Bahamas" |
+                  data$country == "Barbados" |
+                  data$country == "Belize" |
+                  data$country == "Bermuda" |
+                  data$country == "Bonaire" |
+                  data$country == "British Virgin Islands" |
+                  data$country == "Canada" |
+                  data$country == "Cayman Islands" |
+                  data$country == "Cliperton Island" |
+                  data$country == "Costa Rica" |
+                  data$country == "Cuba" |
+                  data$country == "Curacao" |
+                  data$country == "Dominica" |
+                  data$country == "Dominican Republic" |
+                  data$country == "El Salvador" | 
+                  data$country == "Venezuela" |
+                  data$country == "Greenland" |
+                  data$country == "Grenada" |
+                  data$country == "Guadeloupe" |
+                  data$country == "Guatemala" | 
+                  data$country == "Haiti" |
+                  data$country == "Honduras" |
+                  data$country == "Jamaica" |
+                  data$country == "Martinique" |
+                  data$country == "Mexico" | 
+                  data$country == "Montseratt" |
+                  data$country == "Nicaragua" |
+                  data$country == "Panama" |
+                  data$country == "Puerto Rico" |
+                  data$country == "Saba" | 
+                  data$country == "San Andres and Providencia" |
+                  data$country == "Saint Barthelemy" |
+                  data$country == "Saint Kitts and Nevis" |
+                  data$country == "Saint Lucia" |
+                  data$country == "Saint Martin" | 
+                  data$country == "Saint Pierre Miquelon" |
+                  data$country == "St. Vincent and the Grenadines" |
+                  data$country == "Sint Eustatius" |
+                  data$country == "Trinidad and Tobago" |
+                  data$country == "Turks and Caicos Islands" | 
+                  data$country == "United States" |
+                  data$country == "US Virgin Islands"
+          
+                ] <- "North America"
+```
+
+```{r SOUTH AMERICA, echo=TRUE}
+data$Continent[     data$country == "Brazil" |
+                    data$country == "Uruguay" |
+                    data$country == "Paraguay" |
+                    data$country == "Argentina" |
+                    data$country == "Chile" |
+                    data$country == "Bolivia" |
+                    data$country == "Peru" |
+                    data$country == "Ecuador" |
+                    data$country == "Colombia" |
+                    data$country == "Venezuela" |
+                    data$country == "Guyana" |
+                    data$country == "Suriname" |
+                    data$country == "French Guiana" |
+                    data$country == "Falkland Islands" |
+                    data$country == "South Georgia and the South Sandwitch Islands"
+                                                      
+              ] <- "South America"
+```
+
+```{r EUROPE}
+data$Continent[     data$country == "Albania" |
+                    data$country == "Andorra" |
+                    data$country == "Austria" |
+                    data$country == "Belarus" |
+                    data$country == "Belgium" |
+                    data$country == "Bosnia and Herzegovina" |
+                    data$country == "Bulgaria" |
+                    data$country == "Croatia" |
+                    data$country == "Cyprus" |
+                    data$country == "Czech Republic" |
+                    data$country == "Denmark" |
+                    data$country == "Estonia" |
+                    data$country == "Finland" |
+                    data$country == "France" |
+                    data$country == "Germany" |
+                    data$country == "Greece" |
+                    data$country == "Hungary" |
+                    data$country == "Iceland" |
+                    data$country == "Ireland" |
+                    data$country == "Italy" |
+                    data$country == "Latvia" |
+                    data$country == "Liechtestein" |
+                    data$country == "Lithuania" |
+                    data$country == "Luxembourg" |
+                    data$country == "Malta" |
+                    data$country == "Moldova" |
+                    data$country == "Montenegro" |
+                    data$country == "Netherlands" |
+                    data$country == "Macedonia, FYR" |
+                    data$country == "Norway" |
+                    data$country == "Poland" |
+                    data$country == "Portugal" |
+                    data$country == "Romania" |
+                    data$country == "San Marino" |
+                    data$country == "Serbia" |
+                    data$country == "Slovak Republic" |
+                    data$country == "Slovenia" |
+                    data$country == "Spain" |
+                    data$country == "Sweden" |
+                    data$country == "Switzerland" |
+                    data$country == "Ukraine" |
+                    data$country == "United Kingdom" |
+                    data$country == "Vatican City"
+                    
+                ] <- "Europe"
+```
+
+```{r AFRICA}
+data$Continent[     data$country == "Egypt" |
+                    data$country == "Libya" |
+                    data$country == "Tunisia" |
+                    data$country == "Algeria" |
+                    data$country == "Morocco" |
+                    data$country == "Western Sahara" |
+                    data$country == "Mauritania" |
+                    data$country == "Mali" |
+                    data$country == "Senegal" |
+                    data$country == "Gambia" |
+                    data$country == "Cape Verde" |
+                    data$country == "Guinea-Bissau" |
+                    data$country == "Guinea" |
+                    data$country == "Sierra Leone" |
+                    data$country == "Liberia" |
+                    data$country == "Cote d'Ivoire" |
+                    data$country == "Burkina Faso" |
+                    data$country == "Ghana" |
+                    data$country == "Togo" |
+                    data$country == "Benin" |
+                    data$country == "Nigeria" |
+                    data$country == "Niger" |
+                    data$country == "Chad" |
+                    data$country == "Sudan" |
+                    data$country == "Eritrea" |
+                    data$country == "Djibouti" |
+                    data$country == "Ethiopia" |
+                    data$country == "Somalia" |
+                    data$country == "Kenya" |
+                    data$country == "Uganda" |
+                    data$country == "Rwanda" |
+                    data$country == "Burundi" |
+                    data$country == "Congo, Dem. Rep." |
+                    data$country == "Congo, Rep." |
+                    data$country == "Central African Republic" |
+                    data$country == "Cameroon" |
+                    data$country == "Equatorial Guinea" |
+                    data$country == "Gabon" |
+                    data$country == "Angola" |
+                    data$country == "Zambia" |
+                    data$country == "Tanzania" |
+                    data$country == "Malawi" |
+                    data$country == "Mozambique" |
+                    data$country == "Comoros" |
+                    data$country == "Madagascar" |
+                    data$country == "Zimbabwe" |
+                    data$country == "Botswana" |
+                    data$country == "Namibia" |
+                    data$country == "South Africa"|
+                    data$country == "Lesotho" |
+                    data$country == "Eswatini" |
+                    data$country == "Mauritius" |
+                    data$country == "Seychelles"
+                    
+                ] <- "Africa"
+```
+
+```{r ASIA}
+data$Continent[     data$country == "Turkey" |
+                    data$country == "Georgia" |
+                    data$country == "Armenia" |
+                    data$country == "Azerbaijan" |
+                    data$country == "Syria" |
+                    data$country == "Iraq" |
+                    data$country == "Lebanon" |
+                    data$country == "Israel" |
+                    data$country == "Palestine" |
+                    data$country == "Jordan" |
+                    data$country == "Saudi Arabia" |
+                    data$country == "Kuwait" |
+                    data$country == "Bahrain" |
+                    data$country == "Qatar" |
+                    data$country == "United Arab Emirates" |
+                    data$country == "Oman" |
+                    data$country == "Yemen" |
+                    data$country == "Iran" |
+                    data$country == "Afghanistan" |
+                    data$country == "Pakistan" |
+                    data$country == "India" |
+                    data$country == "Nepal" |
+                    data$country == "Bhutan" |
+                    data$country == "Bangladesh" |
+                    data$country == "Sri Lanka" |
+                    data$country == "Maldives" |
+                    data$country == "Myanmar" |
+                    data$country == "Lao" |
+                    data$country == "Vietnam" |
+                    data$country == "Cambodia" |
+                    data$country == "Thailand" |
+                    data$country == "Malaysia" |
+                    data$country == "Singapore" |
+                    data$country == "Brunei" |
+                    data$country == "Philippines" |
+                    data$country == "Indonesia" |
+                    data$country == "Timor-Leste" |
+                    data$country == "Taiwan" |
+                    data$country == "Japan" |
+                    data$country == "South Korea" |
+                    data$country == "North Korea" |
+                    data$country == "China" |
+                    data$country == "Mongolia" |
+                    data$country == "Russia" |
+                    data$country == "Kazakhstan" |
+                    data$country == "Kyrgyz Republic" |
+                    data$country == "Tajikistan" |
+                    data$country == "Uzbekistan" |
+                    data$country == "Turkmenistan"
+                      
+              ] <- "Asia"
+```
+
+```{r OCEANIA}
+data$Continent[     data$country == "Australia" |
+                    data$country == "Papua New Guinea" |
+                    data$country == "New Zealand" |
+                    data$country == "Fiji" |
+                    data$country == "Solomon Islands" |
+                    data$country == "Micronesia, Fed. Sts." |
+                    data$country == "Vanuatu" |
+                    data$country == "Samoa" |
+                    data$country == "Kiribati" |
+                    data$country == "Tonga" |
+                    data$country == "Marshall Islands" |
+                    data$country == "Palau" |
+                    data$country == "Tuvalu" |
+                    data$country == "Nauru"
+                  
+              ]  <- "Oceania"
+```
+
+```{r smarter graphs, eval=FALSE, fig.height=12, fig.width=14, include=FALSE}
+d <- data[,-(11:14)]
+ggpairs(d[,-1], aes(colour = data$state2, alpha = 0.2), upper = list(continuous = wrap("cor", size = 2.5))) + #1.75 - 2.5
+   theme(axis.text = element_text(size = 4.5))
+ggpairs(d[,-1], aes(colour = data$state3, alpha = 0.2), upper = list(continuous = wrap("cor", size = 2.5))) + #1.75 - 2.5
+  theme(axis.text = element_text(size = 4.5))
+ggpairs(d[,-1], aes(colour = data$state5, alpha = 0.2), upper = list(continuous = wrap("cor", size = 2.5))) + #1.75 - 2.5
+  theme(axis.text = element_text(size = 4.5))
+```
+
+```{r hists, echo=TRUE, fig.height=6, fig.width=12, warning=FALSE}
+histogram <- ggplot(data, aes(Continent)) + geom_bar(alpha=0.7, aes(fill=state5)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(histogram)
+
+density_income <- ggplot(data, aes(income, colour=Continent)) + geom_density(alpha=0.25, aes(fill=Continent)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(density_income)
+boxplot_incomeA <- ggplot(data, aes(x = state5, y = income, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+boxplot_incomeB <- ggplot(data, aes(x = Continent, y = income, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+grid.arrange(boxplot_incomeA, boxplot_incomeB, ncol=2)
+
+density_lfexp <- ggplot(data, aes(life_expec, colour=Continent)) + geom_density(alpha=0.25, aes(fill=Continent)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(density_lfexp)
+boxplot_lfexpA <- ggplot(data, aes(x = state5, y = life_expec, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+boxplot_lfexpB <- ggplot(data, aes(x = Continent, y = life_expec, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+grid.arrange(boxplot_lfexpA, boxplot_lfexpB, ncol=2)
+
+density_tfert <- ggplot(data, aes(total_fer, colour=Continent)) + geom_density(alpha=0.25, aes(fill=Continent)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(density_tfert)
+boxplot_tfertA <- ggplot(data, aes(x = state5, y = total_fer, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+boxplot_tfertB <- ggplot(data, aes(x = Continent, y = total_fer, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+grid.arrange(boxplot_tfertA, boxplot_tfertB, ncol=2)
+
+density_chmort <- ggplot(data, aes(child_mort, colour=Continent)) + geom_density(alpha=0.25, aes(fill=Continent)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(density_chmort)
+boxplot_chmortA <- ggplot(data, aes(x = state5, y = child_mort, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+boxplot_chmortB <- ggplot(data, aes(x = Continent, y = child_mort, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+grid.arrange(boxplot_chmortA, boxplot_chmortB, ncol=2)
+
+density_health <- ggplot(data, aes(health, colour=Continent)) + geom_density(alpha=0.25, aes(fill=Continent)) +theme(axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16))
+print(density_health)
+boxplot_healthA <- ggplot(data, aes(x = state5, y = health, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+boxplot_healthB <- ggplot(data, aes(x = Continent, y = health, fill = state5)) + geom_boxplot(notch = TRUE) +stat_summary(fun = "mean", geom = "point", shape = 8,size = 2, color = "darkred") +theme(axis.title.y = element_text(size = 18))
+grid.arrange(boxplot_healthA, boxplot_healthB, ncol=2)
+```
+
+```{r labeled graphs, echo=TRUE, fig.height=10, fig.width=15}
+# income  ~  gdpp  = [0.9]
+c_0.9 <- ggplot(data, aes(income, gdpp, colour=state5)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 16),
+            axis.title.x = element_text(size = 24),
+            axis.title.y = element_text(size = 24)  )
+print(c_0.9)
+
+# child mortality  ~  total fer.   =   [0.8]
+c_0.8 <- ggplot(data, aes(child_mort, total_fer, colour=state5)) +
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 16),
+            axis.title.x = element_text(size = 24),
+            axis.title.y = element_text(size = 24)  )
+print(c_0.8)
+
+# exports ~ imports  =  [0.7]
+c_0.7 <- ggplot(data, aes(exports, imports, colour=state5)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 16),
+            axis.title.x = element_text(size = 24),
+            axis.title.y = element_text(size = 24)  )
+print(c_0.7)
+
+# life expectancy ~ income  =  [0.6]
+c_0.6a <- ggplot(data, aes(life_expec, income, colour=state5)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 16),
+            axis.title.x = element_text(size = 24),
+            axis.title.y = element_text(size = 24)  )
+print(c_0.6a)
+
+
+# life expectancy ~ GDP per capita  =  [0.6]
+c_0.6b <- ggplot(data, aes(life_expec, gdpp, colour=state5)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 16),
+            axis.title.x = element_text(size = 24),
+            axis.title.y = element_text(size = 24)  )
+print(c_0.6b)
+
+```
+
+## PCA
+```{r standardization}
+#standardize data
+data_scaled <- scale(data[,2:10], center = TRUE, scale = TRUE)
+# by scaling we are removing potential bias that the model can have towards features with higher magnitudes.
+row.names(data_scaled) <- data$country
+```
+
+```{r pca factoextra, warning=FALSE}
+data.pca <- prcomp(data_scaled)
+print(data.pca)
+get_eig(data.pca)
+# Percentage of variance/inertia.
+fviz_screeplot(data.pca, addlabels = TRUE, ylim = c(0, 100))
+fviz_pca_var(data.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE  
+)
+
+# Contributions of variables to PC1
+pc1 <- fviz_contrib(data.pca, choice = "var", axes = 1, color = "darkblue", top = 4, ggtheme = theme_minimal())
+# Contributions of variables to PC2
+pc2 <- fviz_contrib(data.pca, choice = "var", axes = 2, color = "darkblue", top = 4, ggtheme = theme_minimal())
+grid.arrange(pc1, pc2, ncol=2)
+
+fvz_biplt1 <- fviz_pca_biplot(data.pca, repel = TRUE,
+                col.var = "magenta", # Variables color
+                col.ind = "#696969",  # Individuals color
+                addEllipses = TRUE
+)
+fvz_biplt1
+
+
+fvz_ind1 <- fviz_pca_ind(data.pca, #iris.pca
+             label = "none", # hide individual labels
+             habillage = as.factor(data$state5), # color by groups
+             palette = "RdBl",
+             #palette = c("cyan", "pink", "green"),
+             addEllipses = TRUE # Concentration ellipses
+)
+fvz_ind1
+
+
+fvz_ellips1 <- fviz_ellipses(data.pca, habillage = as.factor(data$state5),              ellipse.type = "confidence", geom = "point", palette = "lancet")
+fvz_ellips1
+
+
+```
+
+```{r variance}
+data.pca$variance <- data.pca$sdev ^2
+sum(data.pca$variance[1:2])/sum(data.pca$variance)
+summary(data.pca)
+```
+
+```{r labeled projections 2d, fig.height=10, fig.width=20}
+gg2 <- ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=state2)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+print(gg2)
+
+
+gg3 <- ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=state3)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+print(gg3)
+
+
+gg5 <- ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=state5)) + 
+  geom_point(alpha=0.3, size=3) +
+    geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+print(gg5)
+```
+
+```{r FactoMiNeR data}
+Data.pca <- PCA(data[,2:10])
+```
+
+
+```{r FactoMiNeR results, warning=FALSE}
+fviz_screeplot(Data.pca, addlabels = TRUE, ylim = c(0, 100))
+
+#Estimate the number of significant components in Principal Component Analysis.
+#ncp = the best number of dimensions to use (find the minimum or the first local minimum)  ?
+#  and the mean error for each dimension tested 
+estim_ncp(data[,2:10], ncp.min=0, ncp.max=NULL, scale=TRUE, method="GCV")  #FactoMiNeR
+
+dimdesc(Data.pca)
+# Optimal representation of the variables
+# Visualization of correlation between pairs of variables
+#                    by the cosine of their angle.
+# Control variable colors using their contributions
+fviz_pca_var(Data.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE  # Avoid text overlapping
+)
+
+
+# Contributions of variables to PC1
+PC_1 <- fviz_contrib(Data.pca, choice = "var", axes = 1, color = "darkblue", top = 4, ggtheme = theme_minimal())
+# Contributions of variables to PC2
+PC_2 <- fviz_contrib(Data.pca, choice = "var", axes = 2, color = "darkblue", top = 4, ggtheme = theme_minimal())
+library(gridExtra)
+grid.arrange(PC_1, PC_2, ncol=2)
+
+grid.arrange(pc1, pc2, PC_1, PC_2, nrow=2, ncol=2)
+
+Data.pca$eig
+# cumulative (variance %) ---> component 2. 
+Data.pca$eig[2,3]
+
+fvz_biplt2 <- fviz_pca_biplot(Data.pca, repel = TRUE,
+                col.var = "magenta", # Variables color
+                col.ind = "#696969",  # Individuals color
+                addEllipses = TRUE,
+                title = "FactoMineR"
+)
+
+# Visualize
+# Use habillage to specify groups for coloring
+fvz_ind2 <- fviz_pca_ind(data.pca, #iris.pca
+             label = "none", # hide individual labels
+             habillage = as.factor(data$Continent), # color by groups
+             palette = "RdBl",
+             #palette = c("cyan", "pink", "green"),
+             addEllipses = TRUE # Concentration ellipses
+)
+
+fvz_ellips2 <- fviz_ellipses(data.pca, habillage= as.factor(data$Continent),              ellipse.type= "confidence", geom = "point", palette = "lancet")
+
+```
+
+
+```{r combined graphs, fig.height=10, fig.width=20, warning=FALSE}
+grid.arrange(fvz_biplt1, fvz_biplt2, ncol=2)
+grid.arrange(fvz_ind1, fvz_ind2, ncol=2)
+grid.arrange(fvz_ellips1, fvz_ellips2, ncol=2)
+
+fvz_indTwo <- fviz_pca_ind(data.pca, #iris.pca
+             label = "none", # hide individual labels
+             habillage = as.factor(data$state2), # color by groups
+             palette = "RdBl",
+             addEllipses = TRUE # Concentration ellipses
+)
+fvz_indThree <- fviz_pca_ind(data.pca, #iris.pca
+             label = "none", # hide individual labels
+             habillage = as.factor(data$state3), # color by groups
+             palette = "RdBl",
+             addEllipses = TRUE # Concentration ellipses
+)
+```
+
+```{r 3x3 plot, echo=FALSE, fig.height=10, fig.width=20}
+par(mfrow = c(2, 3))
+
+PLT2 <- plot(Data.pca$ind$coord[,1:2], col=as.factor(data$state2), xlab="1st PC",ylab="2nd PC")
+PLT3 <- plot(Data.pca$ind$coord[,1:2], col=as.factor(data$state3), xlab="1st PC",ylab="2nd PC")
+PLT5 <- plot(Data.pca$ind$coord[,1:2], col=as.factor(data$state5), xlab="1st PC",ylab="2nd PC")
+
+plt2 <- plot(data.pca$x[,1:2], col=as.factor(data$state2), xlab="1st PC",ylab="2nd PC")
+plt3 <- plot(data.pca$x[,1:2], col=as.factor(data$state3), xlab="1st PC",ylab="2nd PC")
+plt5 <- plot(data.pca$x[,1:2], col=as.factor(data$state5), xlab="1st PC",ylab="2nd PC")
+
+
+grid.arrange(fvz_indTwo, fvz_indThree, fvz_ind1, ncol=3)
+```
+
+
+```{r heat map, fig.height=22, fig.width=22}
+
+# Hopkins statistic: If the value of Hopkins statistic is close to 1 (far above 0.5), then we can conclude that the dataset is significantly clusterable.
+
+# VAT (Visual Assessment of cluster Tendency): The VAT detects the clustering tendency in a visual form by counting the number of square shaped dark (or colored) blocks along the diagonal in a VAT image.
+#ordered dissimilarity image (ODI)
+get_clust_tendency(data_scaled, n=167-1, graph=TRUE)
+
+# get_dist(): Computes a distance matrix between the rows of a data matrix. 
+#  Compared to the standard dist() function, it supports correlation-based distance measures including "pearson", "kendall" and "spearman" methods.
+distance <- get_dist(data_scaled)
+fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+#f TRUE the ordered dissimilarity image (ODI) is shown.
+fviz_dist(distance, show_labels=TRUE, order = FALSE, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+
+
+```
+
+
+```{r Kernel PCA, fig.height=10, fig.width=20, warning=FALSE}
+# sigma=0.01
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.01),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2.5,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 0,01")
+ggplot(data, aes(rotated(kpc)[,1], rotated(kpc)[,2], colour=state5)) + 
+  geom_point(alpha = 0.3, size=3) + 
+  geom_text( label=data$country, nudge_x=0.45, nudge_y=0.1, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+# kernel function
+kernelf(kpc)
+#print the principal component vectors
+pcv(kpc)
+#The corresponding eigenvalues
+eig(kpc)
+
+
+
+# sigma=0.00000000000000001
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.00000000000000001),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 1 * 10^(-17)")
+# sigma=0.0000000000000001
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.0000000000000001),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 1 * 10^(-16)")
+# sigma=0.0000000000000002
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.0000000000000002),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 2 * 10^(-16)")
+# sigma=0.000000000000000318
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.000000000000000318),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 3,18 * 10^(-16)")
+# sigma=0.00000000000000034
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.00000000000000034),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 3,4 * 10^(-16)")
+# sigma=0.00000000000000035
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.00000000000000035),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 3,5 * 10^(-16)")
+# sigma=0.00000000000000038
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.00000000000000038),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 3,8 * 10^(-16)")
+# sigma=0.00000000000000039
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.00000000000000039),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 3,9 * 10^(-16)")
+# sigma=0.0000000000000004
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.0000000000000004),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 4 * 10^(-16)")
+# sigma=0.05
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.05),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 0,05")
+# sigma=0.62
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.62),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 0,62")
+# sigma=0.63
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=0.63),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 0,63")
+# sigma=13.9
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=13.9),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 13,9")
+# sigma=14
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=14),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 14")
+# sigma=229
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=229),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 229")
+# sigma=230
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=230),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 230")
+# sigma=799
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=799),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 799")
+# sigma=800
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=800),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 800")
+# sigma=1019
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=1019),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 1019")
+# sigma=1020
+kpc <- kpca(~.,data=as.data.frame(data_scaled),kernel="anovadot",
+            kpar=list(sigma=1020),features=2)
+plot(rotated(kpc),col=as.factor(data[,13]), pch=19, cex=2,
+     xlab="1st Principal Component",ylab="2nd Principal Component")
+title(main = "sigma = 1020")
+
+```
+
+
+
+```{r optimal N of clusters}
+fviz_nbclust(data_scaled, kmeans, method = "wss") + 
+  labs(subtitle = "Elbow method")
+fviz_nbclust(data.pca$x, kmeans, method = "wss") + 
+  labs(subtitle = "Elbow method")
+fviz_nbclust(Data.pca$call$X, kmeans, method = "wss") + 
+  labs(subtitle = "Elbow method")
+
+
+fviz_nbclust(data_scaled, kmeans, method = "silhouette") +
+  labs(subtitle = "Silhouette method")
+fviz_nbclust(data.pca$x, kmeans, method = "silhouette") +
+  labs(subtitle = "Silhouette method")
+fviz_nbclust(Data.pca$call$X, kmeans, method = "silhouette") +
+  labs(subtitle = "Silhouette method")
+
+
+fviz_nbclust(data_scaled, kmeans, nstart = 25,  method = "gap_stat", nboot = 100) +
+  labs(subtitle = "Gap statistic method")
+fviz_nbclust(data.pca$x, kmeans, nstart = 25,  method = "gap_stat", nboot = 100) +
+  labs(subtitle = "Gap statistic method")
+fviz_nbclust(Data.pca$call$X, kmeans, nstart = 25,  method = "gap_stat", nboot = 100) +
+  labs(subtitle = "Gap statistic method")
+
+
+nbclust <- NbClust(data = data.pca$x[,1:2], distance = "euclidean",
+                   min.nc = 2, max.nc = 10, method = "kmeans")
+
+# Best number of clusters proposed by each index and the corresponding index value.
+nbclust[["Best.nc"]]
+# Values of indices for each partition of the dataset obtained with a number of clusters between min.nc and max.nc.
+nbclust[["All.index"]]
+# Critical values of some indices for each partition obtained with a number of clusters between min.nc and max.nc.
+nbclust[["All.CriticalValues"]]
+```
+
+```{r number of clusters histogram}
+best_n_of_clusters <- nbclust[["Best.nc"]]
+best_N_of_clusters <- as.integer(best_n_of_clusters[1,])
+hist(best_N_of_clusters,
+     main = "Clusters proposed by indexes",
+     xlab = "Number of clusters",
+     border = "Magenta",
+     col = "Blue",
+     xlim = c (0, 10),
+     ylim = c (0, 20),
+     breaks = 20)
+
+```
+
+
+```{r K-MEANS, fig.height=10, fig.width=20}
+# k-means clustering
+clusters_2 <- kmeans(x = data.pca$x[,1:2], centers = 2, iter.max = 30, nstart = 50)
+clusters_3 <- kmeans(x = data.pca$x[,1:2], centers = 3, iter.max = 30, nstart = 50)
+clusters_5 <- kmeans(x = data.pca$x[,1:2], centers = 5, iter.max = 30, nstart = 50)
+par(mfrow=c(1,2))
+
+plot(data.pca$x[,1:2], col=as.factor(data$state2), pch=20, cex=2.5, xlab="1st PC",ylab="2nd PC")
+title(main = "original")
+plot(data.pca$x[,1:2], col=clusters_2$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(clusters_2$centers[,1], clusters_2$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=clusters_2$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(2)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+
+plot(data.pca$x[,1:2], col=as.factor(data$state3), pch=20, cex=2.5, xlab="1st PC",ylab="2nd PC")
+title(main = "original")
+plot(data.pca$x[,1:2], col=clusters_3$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(clusters_3$centers[,1], clusters_3$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=clusters_3$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(3)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+
+plot(data.pca$x[,1:2], col=as.factor(data$state5), pch=20, cex=2.5, xlab="1st PC",ylab="2nd PC")
+plot(data.pca$x[,1:2], col=clusters_5$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+title(main = "original")
+points(clusters_5$centers[,1], clusters_5$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=clusters_5$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(5)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+```
+
+```{r K-MEDOIDS, fig.height=10, fig.width=20}
+# k-means clustering
+Clusters_2 <- pam(x = data.pca$x[,1:2], k = 2, nstart = 50)
+Clusters_3 <- pam(x = data.pca$x[,1:2], k = 3, nstart = 50)
+Clusters_5 <- pam(x = data.pca$x[,1:2], k = 5, nstart = 50)
+par(mfrow=c(1,2))
+
+plot(data.pca$x[,1:2], col=clusters_2$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(clusters_2$centers[,1], clusters_2$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+plot(data.pca$x[,1:2], col=Clusters_2$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(Clusters_2$medoids[,1], Clusters_2$medoids[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-medoids")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=Clusters_2$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(2)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+
+plot(data.pca$x[,1:2], col=clusters_3$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(clusters_3$centers[,1], clusters_3$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+plot(data.pca$x[,1:2], col=Clusters_3$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(Clusters_3$medoids[,1], Clusters_3$medoids[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-medoids")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=Clusters_3$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(3)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+
+plot(data.pca$x[,1:2], col=clusters_5$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(clusters_5$centers[,1], clusters_5$centers[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-means")
+plot(data.pca$x[,1:2], col=Clusters_5$cluster, pch=20, cex=2.5, xlab="X",ylab="Y")
+points(Clusters_5$medoids[,1], Clusters_5$medoids[,2], col="darkviolet", pch = 8, lwd=1.5)
+title(main = "k-medoids")
+ggplot(data, aes(data.pca$x[,1], data.pca$x[,2], colour=Clusters_5$cluster)) + 
+  geom_point(alpha=0.3, size=3) +
+   scale_colour_gradientn(colours=rainbow(5)) +
+    geom_text( label=data$country, nudge_x=0, nudge_y=0, hjust=0.5, vjust=-1, angle=0, size=3.65, check_overlap = TRUE ) +
+     theme_dark() +
+      theme(legend.key.size = unit(1.5, 'cm'),
+            legend.title = element_text(size = 12), 
+            legend.text  = element_text(size = 18),
+            axis.title.x = element_text(size = 20),
+            axis.title.y = element_text(size = 20)  )
+
+```
+
+
+
+```{r Hierachical}
+dist_matrix <- dist(data_scaled, method = "euclidean")
+```
+
+```{r Complete Linkage, fig.height=12, fig.width=24, warning=FALSE}
+# By default, the COMPLETE LINKAGE method is used.
+# Complete linkage method finds similar clusters.
+clusters_completeL <- hclust(dist_matrix, method = "complete")
+clusters_completeL$labels <- data$country
+
+plot(clusters_completeL, 
+     xlab = "Agglomerative clustering with 167 initial clusters/countries", 
+     cex = 1.1, 
+     label = data$country)
+
+
+clusterCut_2 <- cutree(clusters_completeL, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_completeL, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_completeL, k = 5)
+table(clusterCut_5)
+
+# plot clustering result using 2d scatterplot
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Complete Linkage [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Complete Linkage [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Complete Linkage [5]")
+
+dend_completeL <- as.dendrogram(clusters_completeL)
+
+dend_2 <- color_branches(dend_completeL, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, cex = 0.4, main = "Complete Linkage method [2]")
+
+dend_3 <- color_branches(dend_completeL, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, cex = 0.3, main = "Complete Linkage method [3]")
+
+dend_5 <- color_branches(dend_completeL, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Complete Linkage method [5]")
+
+
+fviz_dend(clusters_completeL,
+          k = 2,
+          k_colors = "nejm",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "nejm",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.auto",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_completeL,
+          k = 3,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout_with_lgl",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_completeL,
+          k = 5,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.gem",
+          ggtheme = theme_void()  )
+```
+
+```{r Single Linkage, fig.height=12, fig.width=24, warning=FALSE}
+# This time, we will use the SINGLE LINKAGE method:
+# it adopts a ‘friends of friends’ clustering strategy.
+clusters_singleL <- hclust(dist_matrix, method = "single")
+clusters_singleL$labels <- data$country
+plot(clusters_singleL, xlab = "Agglomerative clustering with 167 initial clusters/countries", cex = 1.1)
+
+clusterCut_2 <- cutree(clusters_completeL, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_completeL, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_completeL, k = 5)
+table(clusterCut_5)
+
+# plot clustering result using 2d scatterplot
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Single Linkage [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Single Linkage [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Single Linkage [5]")
+
+dend_singleL <- as.dendrogram(clusters_singleL)
+
+dend_2 <- color_branches(dend_singleL, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, main = "Single Linkage method [2]")
+
+dend_3 <- color_branches(dend_singleL, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, main = "Single Linkage method [3]")
+
+dend_5 <- color_branches(dend_singleL, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Single Linkage method [5]")
+
+
+fviz_dend(clusters_singleL,
+          k = 2,
+          k_colors = "nejm",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "nejm",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.auto",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_singleL,
+          k = 3,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout_with_lgl",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_singleL,
+          k = 5,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.gem",
+          ggtheme = theme_void()  )
+```
+
+```{r Average, fig.height=12, fig.width=24, warning=FALSE}
+# This time, we will use the AVERAGE method:
+clusters_average <- hclust(dist_matrix, method = "average")
+clusters_average$labels <- data$country
+plot(clusters_average, xlab = "Agglomerative clustering with 167 initial clusters", cex = 1.1)
+
+clusterCut_2 <- cutree(clusters_average, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_average, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_average, k = 5)
+table(clusterCut_5)
+
+# plot clustering result using 2d scatterplot
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Average Method [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Average Method [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Average Method [5]")
+
+dend_average <- as.dendrogram(clusters_average)
+
+dend_2 <- color_branches(dend_average, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, main = "Average method [2]")
+
+dend_3 <- color_branches(dend_average, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, main = "Average method [3]")
+
+dend_5 <- color_branches(dend_average, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Average method [5]")
+
+fviz_dend(clusters_average,
+          k = 2,
+          k_colors = "nejm",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "nejm",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.auto",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_average,
+          k = 3,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout_with_lgl",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_average,
+          k = 5,
+          k_colors = "uchicago",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "uchicago",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.gem",
+          ggtheme = theme_void()  )
+
+```
+
+```{r Median, fig.height=12, fig.width=24, warning=FALSE}
+# This time, we will use the MEDIAN distance method:
+clusters_median <- hclust(dist_matrix, method = "median")
+clusters_median$labels <- data$country
+plot(clusters_median, xlab = "Agglomerative clustering with 167 initial clusters", cex = 1.1)
+
+clusterCut_2 <- cutree(clusters_median, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_median, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_median, k = 5)
+table(clusterCut_5)
+
+# plot clustering result using 2d scatterplot
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Median method [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Median method [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Median method [5]")
+#--------------------
+
+dend_median <- as.dendrogram(clusters_median)
+
+dend_2 <- color_branches(dend_median, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, main = "Average method [2]")
+
+dend_3 <- color_branches(dend_median, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, main = "Average method [3]")
+
+dend_5 <- color_branches(dend_median, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Average method [5]")
+```
+
+
+```{r Centroid, fig.height=12, fig.width=24, warning=FALSE}
+# This time, we will use the centroid method:
+clusters_centroid <- hclust(dist_matrix, method = "centroid")
+clusters_centroid$labels <- data$country
+plot(clusters_centroid, xlab = "Agglomerative clustering with 167 initial clusters", cex = 1.1)
+
+clusterCut_2 <- cutree(clusters_centroid, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_centroid, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_centroid, k = 5)
+table(clusterCut_5)
+
+# plot clustering result using 2d scatterplot
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Centroid method [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Centroid method [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Centroid method [5]")
+#--------------------
+
+dend_centroid <- as.dendrogram(clusters_centroid)
+
+dend_2 <- color_branches(dend_centroid, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, main = "Centroid method [2]")
+
+dend_3 <- color_branches(dend_centroid, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, main = "Centroid method [3]")
+
+dend_5 <- color_branches(dend_centroid, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Centroid method [5]")
+
+```
+
+
+
+```{r Wards, fig.height=12, fig.width=24, warning=FALSE}
+# This time, we will use Ward's method:
+# Ward's minimum variance method aims at finding compact, spherical clusters.
+# "ward.D" does not implement Ward's (1963) clustering criterion,
+# whereas option "ward.D2" implements that criterion:
+# with the latter, dissimilarities are squared before cluster updating.
+clusters_ward <- hclust(dist_matrix, method = "ward.D2")
+clusters_ward$labels <- data$country
+plot(clusters_ward, xlab = "Agglomerative clustering with 167 initial clusters", cex = 1.1)
+
+rect.hclust(clusters_ward, k = 5, border = 2:5)
+
+clusterCut_2 <- cutree(clusters_ward, k = 2)    # calculate final labeling given the number of clusters
+table(clusterCut_2)                    # Number of members in each cluster
+clusterCut_3 <- cutree(clusters_ward, k = 3)
+table(clusterCut_3)
+clusterCut_5 <- cutree(clusters_ward, k = 5)
+table(clusterCut_5)
+
+
+plot(data.pca$x[,1:2], col=clusterCut_2, pch=19, cex=2.5, xlab="X", ylab="Y", main="Ward's method [2]")
+plot(data.pca$x[,1:2], col=clusterCut_3, pch=19, cex=2.5, xlab="X", ylab="Y", main="Ward's method [3]")
+plot(data.pca$x[,1:2], col=clusterCut_5, pch=19, cex=2.5, xlab="X", ylab="Y", main="Ward's method [5]")
+
+dend_ward <- as.dendrogram(clusters_ward)
+
+dend_2 <- color_branches(dend_ward, k = 2)
+plot(dend_2, type = "triangle", center = TRUE, main = "Ward's method [2]")
+
+dend_3 <- color_branches(dend_ward, k = 3)
+plot(dend_3, type = "triangle", center = TRUE, main = "Ward's method [3]")
+
+dend_5 <- color_branches(dend_ward, k = 5)
+plot(dend_5, type = "triangle", center = TRUE, main = "Ward's method [5]")
+
+
+fviz_dend(clusters_ward,
+          k = 2,
+          k_colors = "igv",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "igv",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.auto",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_ward,
+          k = 3,
+          k_colors = "jco",
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = "jco",
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout_with_lgl",
+          ggtheme = theme_void()  )
+
+fviz_dend(clusters_ward,
+          k = 5,
+          k_colors = c("#5050FFFF", "#7AA6DCFF", "#868686FF", "#CD534CFF", "#EFC000FF"),
+          color_labels_by_k = TRUE,
+          lwd = 0.7,
+          cex = 1.3,
+          rect = TRUE,
+          rect_border = c("#5050FFFF", "#7AA6DCFF", "#868686FF", "#CD534CFF", "#EFC000FF"),
+          rect_fill = TRUE,
+          type = "phylogenic",
+          repel = TRUE,
+          phylo_layout = "layout.gem",
+          ggtheme = theme_void()  )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
