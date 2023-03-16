@@ -1,2 +1,2 @@
 # countries-EDA
-Exploratory Data Analysis in R Markdown.
+Exploratory Data Analysis in **R Markdown**.
