@@ -1,0 +1,73 @@
+Column Name,Description
+country,Name of the country
+child_mort,Death of children under 5 years of age per 1000 live births
+exports,Exports of goods and services per capita. Given as %age of the GDP per capita
+health,Total health spending per capita. Given as %age of GDP per capita
+imports,Imports of goods and services per capita. Given as %age of the GDP per capita
+Income,Net income per person
+Inflation,The measurement of the annual growth rate of the Total GDP
+life_expec,The average number of years a new born child would live if the current mortality patterns are to remain the same
+total_fer,The number of children that would be born to each woman if the current age-fertility rates remain the same.
+gdpp,The GDP per capita. Calculated as the Total GDP divided by the total population.
+
+
+
+=============================================================
+Insights from Pearson's Correlation Coefficient Plot :
+
+Imports have high positive correlation with Exports (+0.74)
+Income has fairly high positive correlation with Exports (+0.52)
+Life Expectancy has fairly high positive correlation with Income (+0.61)
+Total Fertility has very high positive correlation with Child Mortality (+0.85)
+GDPP has very high positive correlation with Income (+0.90)
+GDPP has fairly high positive correlation with Life Expectancy (+0.60)
+Total Fertility has fairly high negative correlation with Life Expectancy (-0.76) - Well, I found this particular thing as an interesting insight but let's not forget "Correlation does not imply causation"!
+
+
+==============================================================
+Based on an initial assessment of the average values of each cluster, Cluster 1 could be focus for further analysis. However, when we plot the clusters and look at the graphs, we see that there is overlapping of clusters as well as spread out clusters.
+
+Utilising PCA as an alternative did not result in a significant difference.
+
+We've been able to identify some patters in the data and group countries into 3 clusters. However, we should not rely solely on this result to make the recommendation of countries that should receive funding. There are a few alternatives to explore before we can make this recommendation.
+
+The implementation of a clustering model in this case did not bring up patters that we might have not found otherwise, in a way, it only confirmed general knowledge of intuition about this topic. The clustering can be considered as a preprocessing step and further analysis is required. Here are some alternatives to explore:
+
+============================================================
+Learnings
+
+The clustering method alone was not sufficient to provide a final recommendation, however it did contribute to guide actions for further analysis and explore the data in more detail.
+
+Further analysis could be done by adding more features related to the context and constraints that the recommended countries might be facing, or systemic challenges that could hinder funding value. Issues like corruption, political/civic society crisis/ natural disasters and other risks could expand this analysis to develop a more suitable criteria for funding depending on the current context of a country beyond these macro indicators.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
